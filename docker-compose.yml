@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  qdrant:
+    image: qdrant/qdrant
+    ports:
+      - "6333:6333" # UI Dashboard available at http://localhost:6333/dashboard
+      - "6334:6334" # gRPC endpoint
+    volumes:
+      - ./qdrant_storage:/qdrant/storage:z

@@ -1,0 +1,11 @@
+python-dotenv==1.0.0
+requests==2.31.0
+numpy==1.26.4
+pandas==2.2.1
+llama-index==0.12.23
+qdrant_client 
+torch 
+transformers
+llama-index-embeddings-huggingface
+llama-index-llms-ollama
+llama-index-vector-stores-qdrant
