@@ -19,9 +19,20 @@ class Config:
     # PDF document folder
     INPUT_DOC_FOLDER = os.getenv('INPUT_DOC_FOLDER', './data') 
 
-    # API keys
-    OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+    # Document file extension to process
+    DOC_FILE_TYPE = os.getenv('DOC_FILE_TYPE', '.pdf')
+
+    # Vector store collection name
+    VECTOR_STORE_DOC_COLLECTION_NAME = os.getenv('VECTOR_STORE_DOC_COLLECTION_NAME', 'chat_with_docs')
+
+    # The model to use for embedding
+    EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
     
+    # The LLM model to use for generation
+    LLM = os.getenv('LLM', 'llama3.2:1b')
+    
+    # The model to use for reranking
+    RERANKER_MODEL = os.getenv('RERANKER_MODEL')
     # Database configuration
     DB_HOST = os.getenv('DB_HOST', 'localhost')
     DB_PORT = int(os.getenv('DB_PORT', 5432))
