@@ -49,7 +49,7 @@ The system consists of the following components:
      - `EMBEDDING_MODEL`: HuggingFace embedding model (default: 'BAAI/bge-large-en-v1.5')
      - `RERANKER_MODEL`: SentenceTransformer reranker model name
      - `INPUT_DOC_FOLDER`: Directory containing your PDF documents (default: `./data`)
-     - `DOC_FILE_TYPE`: Type of documents to process (default: pdf)
+     - `DOC_FILE_TYPES`: Type of documents to process (default: pdf)
      - `VECTOR_STORE_DOC_COLLECTION_NAME`: Name for the Qdrant collection
 
 4. **Start the Qdrant vector database**:

@@ -19,6 +19,7 @@ from llama_index.core import Settings
 from llama_index.core import PromptTemplate
 from llama_index.core.postprocessor import SentenceTransformerRerank
 from llama_index.core.schema import Document
+from llama_index.core.query_engine import BaseQueryEngine
 from typing import List
 
 # Set up logging
@@ -27,8 +28,6 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
-
-
 
 def load_embedding_model() -> HuggingFaceEmbedding:
     """
@@ -104,19 +103,21 @@ def create_prompt_template():
     qa_prompt_tmpl = PromptTemplate(template)
     return qa_prompt_tmpl
 
-def scan_docs(input_dir_path) -> List[Document]:
+def scan_docs(input_dir_path: str, file_type_list: list[str]) -> List[Document]:
     """
     Scan the input directory for documents of the specified type.
     Args:
         input_dir_path: Path to the directory containing the documents.
+        file_type_list: List of file types to load from the directory.
     Returns:
         List[Document]: List of documents loaded from the input directory.
     """
+    logger.info(f"Scanning directory:{input_dir_path} for files of type:{file_type_list}")
     # llamaindex utility method that scans a directory, filters for specific file types, and loads document content into a format we can work with.
     directory_reader = SimpleDirectoryReader(
             input_dir = input_dir_path,
             # Load specific types of files from the given directory...
-            required_exts=[Config.DOC_FILE_TYPE],
+            required_exts=file_type_list,
             # ...recursively.
             recursive=True
         )
@@ -124,7 +125,7 @@ def scan_docs(input_dir_path) -> List[Document]:
     # Thus, the load_data() method is used to read the PDF file's content 
     # and return it in a structured format, storing it in docs list.
     docs = directory_reader.load_data()
-    logger.info(f"Loaded {len(docs)} documents from:{input_dir_path}")
+    logger.info(f"Loaded {len(docs)} documents from:{input_dir_path} of type:{file_type_list}")
     return docs
 
 def create_reranker() -> SentenceTransformerRerank:
@@ -134,44 +135,45 @@ def create_reranker() -> SentenceTransformerRerank:
     Returns:
         Reranker: The created reranker.
     """
-    rerank = SentenceTransformerRerank(model=Config.RERANKER_MODEL, top_n=3)
+    # top_n: Number of top results to return after reranking; limits the final results to only the 3 most relevant chunks
+    rerank = SentenceTransformerRerank(model=Config.RERANKER_MODEL, top_n=3)  
     return rerank
 
-def main():
+def create_knowledge_base(input_dir_path: str, file_type_list: list[str], collection_name: str, qdrant_host: str, qdrant_port: int) -> VectorStoreIndex:
     """
-    Main entry point for the application
+    Create a knowledge base from the input directory embedding in Qdrant the documents (of provided type) included in the directory.
+    Args:
+        input_dir_path: Path to the directory containing the documents.
+        file_type_list: List of file types to load from the directory.
+        collection_name: Name of the collection to add the documents to.
+        qdrant_host: Hostname of the Qdrant server.
+        qdrant_port: Port number of the Qdrant server.
     """
-    logger.info("Starting RAG application")
-    
-    # Example of accessing environment variables
-    if Config.DEBUG:
-        logger.info("Debug mode is enabled")
-    
-    # Setup async
-    nest_asyncio.apply()
-
     # Load the embedding model from the configuration and set it as the default embedding model in settings.
     load_embedding_model()
-    # Load the LLM from the configuration and set it as the default LLM in settings.
-    load_llm()
 
     # Initialize a QdrantClient instance, connecting it to the Qdrant server running locally.
     logger.info("Initializing QDRANT client")
-    collection_name=Config.VECTOR_STORE_DOC_COLLECTION_NAME
-    client = qdrant_client.QdrantClient(host="localhost", port=6333)
-    logger.info("Qdrant client initialized successfully")
-
-    input_dir_path = Config.INPUT_DOC_FOLDER
-    docs = scan_docs(input_dir_path)
+    client = qdrant_client.QdrantClient(host=qdrant_host, port=qdrant_port)
+    logger.info(f"Qdrant client initialized successfully at {qdrant_host}:{qdrant_port}")
+    # Scan the provided input directory for documents of the specified type.
+    docs = scan_docs(input_dir_path, file_type_list)
     
     # Create a vector store index for the given documents, adding to the given collection.
     # This function converts each document into an embedding using loaded embed_model
     # and stores the embeddings in Qdrant.
     vector_store_index = create_index(docs, client, collection_name)
     logger.info("Index created successfully")
+    return vector_store_index
 
+def create_query_engine(vector_store_index: VectorStoreIndex) -> BaseQueryEngine:
     # Create a reranker for the given context and query.
     reranker = create_reranker()
+    # Create a prompt template for the given context and query.
+    qa_prompt_tmpl = create_prompt_template()
+    # Load the LLM from the configuration and set it as the default LLM in settings.
+    load_llm()
+
     # Convert the previously created index into a query engine
     # - We specify that the engine should retrieve the top 10 most similar document chunks based on vector similarity to the query. 
     #   This forms the initial set of chunks for answering the query.
@@ -179,14 +181,63 @@ def main():
     #   The rerank model will evaluate these chunks to select the most relevant ones for generating a response.
     query_engine = vector_store_index.as_query_engine(similarity_top_k=10, node_postprocessors=[reranker])
 
-    # Create a prompt template for the given context and query.
-    qa_prompt_tmpl = create_prompt_template()
     # Add the prompt template to the query engine.
     query_engine.update_prompts({"response_synthesizer:text_qa_template": qa_prompt_tmpl})
+    return query_engine
 
+def query(query_engine, query_str)-> str:
+    """
+    Execute a query using the configured query engine.
+    Args:
+        query_engine: The query engine to use for executing the query.
+        query_str: The query string to execute.
+    Returns:
+        str: The response from the query engine.
+    """
     # Execute a query using the configured query engine.
-    response = query_engine.query("Explain what is the design pattern fire and forget and how it works")
+    response = query_engine.query(query_str)
     logger.info(f"Response: {response}")
+    return response
+
+
+def main():
+    """
+    Main entry point for the application
+    """
+    logger.info("Starting RAG application")
+    query_engine = setup_app()
+    
+    while True:
+        query_str = input("Enter your query: ")
+        response = query(query_engine, query_str)
+        logger.info(f"Response: {response}")
+
+def setup_app()-> BaseQueryEngine:
+    """
+    Setup the application by creating the knowledge base and query engine.
+    """
+    logger.info("Setting up application...")
+    # Example of accessing environment variables
+    if Config.DEBUG:
+        logger.info("Debug mode is enabled")
+    
+    # Setup async
+    # (LlamaIndex and other libraries that work with LLMs often use asynchronous operations internally, 
+    # which might conflict if multiple async operations need to run simultaneously)
+    nest_asyncio.apply()
+
+    # Create the knowledge base from the input directory embedding in Qdrant the documents (of provided type) included in the directory
+    vector_store_index = create_knowledge_base(Config.INPUT_DOC_FOLDER, 
+                                               Config.DOC_FILE_TYPES, 
+                                               Config.VECTOR_STORE_DOC_COLLECTION_NAME, 
+                                               Config.QDRANT_HOST, 
+                                               Config.QDRANT_PORT)
+
+    # Create a query engine from the vector store index defined as knowledge base
+    query_engine = create_query_engine(vector_store_index)
+    logger.info("Application setup completed!")
+    return query_engine
+    
 
 if __name__ == "__main__":
     main()

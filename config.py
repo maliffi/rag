@@ -20,31 +20,24 @@ class Config:
     INPUT_DOC_FOLDER = os.getenv('INPUT_DOC_FOLDER', './data') 
 
     # Document file extension to process
-    DOC_FILE_TYPE = os.getenv('DOC_FILE_TYPE', '.pdf')
+    DOC_FILE_TYPES = os.getenv('DOC_FILE_TYPES', '.pdf').split(',')
 
     # Vector store collection name
-    VECTOR_STORE_DOC_COLLECTION_NAME = os.getenv('VECTOR_STORE_DOC_COLLECTION_NAME', 'chat_with_docs')
+    VECTOR_STORE_DOC_COLLECTION_NAME = os.getenv('VECTOR_STORE_DOC_COLLECTION_NAME')
 
     # The model to use for embedding
     EMBEDDING_MODEL = os.getenv('EMBEDDING_MODEL')
     
     # The LLM model to use for generation
-    LLM = os.getenv('LLM', 'llama3.2:1b')
+    LLM = os.getenv('LLM')
     
     # The model to use for reranking
     RERANKER_MODEL = os.getenv('RERANKER_MODEL')
-    # Database configuration
-    DB_HOST = os.getenv('DB_HOST', 'localhost')
-    DB_PORT = int(os.getenv('DB_PORT', 5432))
-    DB_NAME = os.getenv('DB_NAME', 'rag_database')
-    DB_USER = os.getenv('DB_USER', 'username')
-    DB_PASSWORD = os.getenv('DB_PASSWORD', 'password')
+    
+    # Qdrant settings
+    QDRANT_HOST = os.getenv('QDRANT_HOST', 'localhost')
+    QDRANT_PORT = int(os.getenv('QDRANT_PORT', '6333'))
     
     # Application settings
     DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't')
     LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
-    
-    @classmethod
-    def get_database_url(cls):
-        """Returns the database URL constructed from individual settings"""
-        return f"postgresql://{cls.DB_USER}:{cls.DB_PASSWORD}@{cls.DB_HOST}:{cls.DB_PORT}/{cls.DB_NAME}"
