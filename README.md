@@ -51,6 +51,10 @@ The system consists of the following components:
      - `INPUT_DOC_FOLDER`: Directory containing your PDF documents (default: `./data`)
      - `DOC_FILE_TYPES`: Type of documents to process (default: pdf)
      - `VECTOR_STORE_DOC_COLLECTION_NAME`: Name for the Qdrant collection
+     - `QDRANT_HOST`: Qdrant host (default: localhost)
+     - `QDRANT_PORT`: Qdrant port (default: 6333)
+     - `DEBUG`: Enable/disable debug mode
+     - `LOG_LEVEL`: Logging level (e.g., INFO, DEBUG)
 
 4. **Start the Qdrant vector database**:
    ```bash
