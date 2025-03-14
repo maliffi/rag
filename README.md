@@ -75,6 +75,44 @@ The system consists of the following components:
    python main.py
    ```
 
+## Streamlit Web Application
+
+The project includes a Streamlit web interface that makes interacting with the RAG system more user-friendly.
+
+### Features
+
+- **Document Upload**: Upload PDF documents directly through the web interface
+- **Interactive Q&A**: Ask questions about your documents and receive answers with context
+- **Configuration Management**: View and modify collection names through the UI
+- **Chat History**: Keep track of your question-answer pairs during a session
+- **Modern UI**: Clean, responsive interface with intuitive controls
+
+### Running the Streamlit App
+
+1. **Start the Streamlit server**:
+   ```bash
+   streamlit run app.py
+   ```
+
+2. **Access the web interface**:
+   - Open your browser and navigate to `http://localhost:8501`
+   - The interface will be available at the URL shown in your terminal when you run the command
+
+3. **Using the application**:
+   - Upload PDF documents using the sidebar
+   - Click "Index Documents" to process and store them
+   - Ask questions in the main panel once indexing is complete
+   - View answers generated based on the content of your documents
+
+### Requirements
+
+Make sure you have the Streamlit package installed:
+```bash
+pip install streamlit
+```
+
+This should already be included in the requirements.txt file.
+
 ## Project Structure
 
 ```

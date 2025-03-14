@@ -9,3 +9,5 @@ transformers
 llama-index-embeddings-huggingface
 llama-index-llms-ollama
 llama-index-vector-stores-qdrant
+streamlit==1.36.0
+nest-asyncio==1.6.0
