@@ -24,7 +24,6 @@ def query(query_engine, query_str)-> str:
     """
     # Execute a query using the configured query engine.
     response = query_engine.query(query_str)
-    logger.info(f"Response: {response}")
     return response
 
 
@@ -58,8 +57,8 @@ def setup_app():
     vector_store_index = create_knowledge_base(Config.INPUT_DOC_FOLDER, 
                                                Config.DOC_FILE_TYPES, 
                                                Config.VECTOR_STORE_DOC_COLLECTION_NAME, 
-                                               Config.QDRANT_HOST, 
-                                               Config.QDRANT_PORT)
+                                               Config.DB_HOST, 
+                                               Config.DB_PORT)
 
     # Create a query engine from the vector store index defined as knowledge base
     query_engine = create_query_engine(vector_store_index)

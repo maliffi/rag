@@ -159,8 +159,11 @@ def main():
                         temp_dir, file_path = save_uploaded_file(uploaded_file)
                         temp_dirs.append(temp_dir)
                         
-                        # Load the saved document
-                        file_docs = scan_docs(temp_dir)
+                        # Extract file extension from file_path
+                        file_ext = os.path.splitext(file_path)[1]  # Keep the dot in extension
+                        logger.info(f"File extension: {file_ext}")
+                        # Load the saved document with specific file extension
+                        file_docs = scan_docs(temp_dir, [file_ext])
                         documents.extend(file_docs)
                     
                     if documents:

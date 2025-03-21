@@ -42,10 +42,10 @@ def load_llm():
     Returns:
         Ollama: The loaded LLM instance.
     """
-    # Specifying a request_timeout of 120 seconds 
+    # Specifying a request_timeout of Config.LLM_REQ_TIMEOUT_SECONDS seconds 
     # for requests to the LLM to ensure that the system doesn't get stuck 
     # if the model takes too long to respond.
-    llm = Ollama(model=Config.LLM, request_timeout=120.0)
+    llm = Ollama(model=Config.LLM, request_timeout=Config.LLM_REQ_TIMEOUT_SECONDS)
     # Set the above LLM instance as the default language model in Settings, 
     # making it the *primary model* used in our RAG pipeline.
     Settings.llm = llm

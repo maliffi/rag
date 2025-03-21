@@ -35,8 +35,11 @@ class Config:
     RERANKER_MODEL = os.getenv('RERANKER_MODEL')
     
     # Qdrant settings
-    QDRANT_HOST = os.getenv('QDRANT_HOST', 'localhost')
-    QDRANT_PORT = int(os.getenv('QDRANT_PORT', '6333'))
+    DB_HOST = os.getenv('DB_HOST', 'localhost')
+    DB_PORT = int(os.getenv('DB_PORT', '6333'))
+    
+    # LLM settings
+    LLM_REQ_TIMEOUT_SECONDS = float(os.getenv('LLM_REQ_TIMEOUT_SECONDS', '120.0'))
     
     # Application settings
     DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't')
