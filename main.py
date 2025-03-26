@@ -10,7 +10,7 @@ from datasets import Dataset
 from tqdm.auto import tqdm
 
 from langchain_community.embeddings import OllamaEmbeddings
-from langchain_community.llms import Ollama
+from langchain_ollama import OllamaLLM
 
 from ragas import evaluate
 from ragas.metrics import (
@@ -70,16 +70,19 @@ def main():
     ragas_eval_dataset = Dataset.from_dict(dataset_dict)
 
     # Recall that we need a Critic LLM along with an embedding model to compute similarities when needed.
-    critic_llm = Ollama(model="llama3.2:1b")
+    critic_llm = OllamaLLM(model="llama3.2:1b")
     ollama_emb = OllamaEmbeddings(model="nomic-embed-text")
 
     metrics = [faithfulness, answer_correctness, context_recall, context_precision]
+    # Increase timeout and add retry count to handle parsing errors
+    run_config = RunConfig(timeout=6000, max_retries=10)  
     # Now, we can again use Ragas to compute the metrics
     evaluation_result = evaluate(
         llm=critic_llm,
         embeddings=ollama_emb,
         dataset=ragas_eval_dataset,
-        metrics=metrics
+        metrics=metrics,
+        run_config=run_config
     )
     # The evaluation_results object can be viewed as a Pandas DataFrame
     eval_scores_df = pd.DataFrame(evaluation_result.scores)
