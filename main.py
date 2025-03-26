@@ -5,6 +5,20 @@ import logging
 import nest_asyncio
 from config import Config
 from rag import create_knowledge_base, create_query_engine
+import pandas as pd
+from datasets import Dataset
+from tqdm.auto import tqdm
+
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain_community.llms import Ollama
+
+from ragas import evaluate
+from ragas.metrics import (
+    faithfulness,
+    answer_correctness,
+    context_recall,
+    context_precision,
+)
 
 # Set up logging
 logging.basicConfig(
@@ -33,11 +47,59 @@ def main():
     """
     logger.info("Starting RAG application")
     query_engine = setup_app()
+
+    # Load test data and convert to a pandas dataframe
+    csv_file = 'testset/test_data_paul_graham.csv'
+    test_df = pd.read_csv(csv_file).dropna()
+
+    # Extract questions  
+    test_questions = test_df["question"].values
+
+    # Generate a response for each question
+    responses = [generate_response(query_engine, q) for q in tqdm(test_questions)]
+
+    # Build a dataset dict putting together questions, answers, contexts and ground truth
+    dataset_dict = {
+        "question": test_questions,
+        "answer": [response["answer"] for response in responses],
+        "contexts": [response["contexts"] for response in responses],
+        "ground_truth": test_df["ground_truth"].values.tolist(),
+    }
+
+    # Build a dataset from the dict
+    ragas_eval_dataset = Dataset.from_dict(dataset_dict)
+
+    # Recall that we need a Critic LLM along with an embedding model to compute similarities when needed.
+    critic_llm = Ollama(model="llama3.2:1b")
+    ollama_emb = OllamaEmbeddings(model="nomic-embed-text")
+
+    metrics = [faithfulness, answer_correctness, context_recall, context_precision]
+    # Now, we can again use Ragas to compute the metrics
+    evaluation_result = evaluate(
+        llm=critic_llm,
+        embeddings=ollama_emb,
+        dataset=ragas_eval_dataset,
+        metrics=metrics
+    )
+    # The evaluation_results object can be viewed as a Pandas DataFrame
+    eval_scores_df = pd.DataFrame(evaluation_result.scores)
+    logger.info("Evaluation scores:\n", eval_scores_df)
+
+def generate_response(query_engine, question) -> dict:
+    """
+    Generate a response to a question using the configured query engine.
     
-    while True:
-        query_str = input("Enter your query: ")
-        response = query(query_engine, query_str)
-        logger.info(f"Response: {response}")
+    Args:
+        query_engine: The query engine to use for generating the response.
+        question: The question to generate a response for.
+    Returns:
+        dict: A dictionary containing the generated response and the source nodes.
+    """
+    response = query_engine.query(question)
+    return {
+        "answer": response.response,
+        "contexts": [c.node.get_content() for c in response.source_nodes],
+    }
 
 def setup_app():
     """

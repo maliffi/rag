@@ -1,7 +1,7 @@
 python-dotenv==1.0.0
-requests==2.31.0
+requests
 numpy==1.26.4
-pandas==2.2.1
+pandas==2.2.3
 llama-index==0.12.23
 qdrant_client 
 torch 
@@ -11,3 +11,11 @@ llama-index-llms-ollama
 llama-index-vector-stores-qdrant
 streamlit==1.36.0
 nest-asyncio==1.6.0
+datasets==3.4.1
+# RAG related packages
+langchain==0.3.21
+langchain-community==0.3.20
+langchain-ollama==0.2.3
+tqdm==4.67.1
+# To evaluate the RAG system
+ragas==0.2.14
